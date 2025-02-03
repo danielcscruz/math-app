@@ -1,11 +1,16 @@
 <script setup>
 import {reactive} from 'vue'
+import Displaycomp from './components/Displaycomp.vue'
+import Formcomp from './components/Formcomp.vue'
+import Buttoncomp from './components/Buttoncomp.vue'
+import Listcomp from './components/Listcomp.vue'
 
-const estado = reactive({
+let estado = reactive({
   resposta: 0,
-  numero1 : 0,
-  numero2 : 0,
-  operador: ''
+  numero1 : '',
+  numero2 : '',
+  operador: '',
+  listas: []
 })
 
 function calcularOperacao(numa,numb,o){
@@ -17,7 +22,6 @@ function calcularOperacao(numa,numb,o){
     case "*":  estado.resposta = a*b;  break;
     case "/":  estado.resposta = a/b;  break;
   }
-  console.log(estado.resposta)
 }
 
 const atualizarVariaveis = (v,b) => {
@@ -33,54 +37,82 @@ const atualizarVariaveis = (v,b) => {
   }
 }
 
-
 const mudarOperador = (o) => {
   estado.operador = o;
-  console.log(o);
   calcularOperacao(estado.numero1, estado.numero2, estado.operador);
 }
 
 const limparTela = () =>{
   estado.operador = '';
-  estado.numero1 = 0;
-  estado.numero2 = 0;
+  estado.numero1 = '';
+  estado.numero2 = '';
+  estado.listas =[];
 }
 
+const addLista = () => {
+  if (estado.operador==''){
+    estado.listas.push("error: missing math operator")
+  }else{
+    if (estado.numero1=='' || estado.numero2==''){
+      estado.listas.push("error: missing number")
+    }else{
+      estado.listas.push(`${estado.numero1} ${estado.operador} ${estado.numero2} = ${estado.resposta}`);
+    } 
+  }
+  
+}
 
 </script>
 
 <template>
-<div class="container">
-  <div class="calculator pt-5 d-flex flex-column align-items-center ">
-    <div class="dis pe-5 ps-5 w-50 py-4 rounded-3 text-light text-center col-md-5">
-      <h5 v-if="estado.operador ===''">math app</h5>
-      <h5 v-else="estado.operador ===''">{{  estado.numero1 }} <span v-if="estado.numero1 !== '' && estado.numero2 !== ''">{{ estado.operador }}</span>  {{ estado.numero2 }} <span v-if="estado.numero1 !== '' && estado.numero2 !== ''" >=</span></h5>
-      
-      <h1 v-if="estado.operador ===''" style="color:#505050">__</h1>
-      <h1 v-else="estado.operador ===''">{{ estado.resposta }}</h1>
 
-    </div>
-    <div class="numbers mt-5 d-flex justify-content-center align-items-center "> 
-      <input type="number" class="fs-1 py-4 rounded-4 col-md-2 col-sm-4 ms-5 me-5 bg-light"
-      v-model="estado.numero1" @keyup="atualizarVariaveis($event.target.value,'1')" >
-      <!-- <span class="operator fs-1">{{ estado.operador }}</span> -->
-      <select v-model="estado.operador" @change="mudarOperador($event.target.value)" class="form-control">
-                    <option value=""></option>
-                    <option value="+">+</option>
-                    <option value="-">-</option>
-                    <option value="/">/</option>
-                    <option value="*">*</option>
-      </select>
-      <input type="number" class="fs-1 py-4 rounded-4 col-md-2 col-sm-4 ms-5 me-5 bg-light" 
-      v-model="estado.numero2" @keyup="atualizarVariaveis($event.target.value,'2')">
-    </div>
-    <div class="operators p-5 mb-4 mt-4 d-flex justify-content-center">
-      <form @submit.prevent="calcularOperacao(estado.numero1,estado.numero2,estado.operador)">
-        <button type="button" class="fs-1 ms-3 me-3 p-4 rounded-5" @click="limparTela()">C</button>
-        
-      </form>
-    </div>
+<div class="row d-flex">
+  <div class="calculator pt-5 d-flex flex-column align-items-center col-md-8">
+    <Displaycomp 
+      :num1 = "estado.numero1"
+      :num2 = "estado.numero2"
+      :ope = "estado.operador"
+      :res = "estado.resposta" />
+
+    <Formcomp
+      :num1="estado.numero1"
+      :num2="estado.numero2"
+      :ope="estado.operador"
+      :atualizarVariaveis="atualizarVariaveis"
+      :mudarOperador="mudarOperador"
+      @update:num1="estado.numero1 = $event"
+      @update:num2="estado.numero2 = $event"
+      @update:ope="estado.operador = $event"
+    />
+    <Buttoncomp
+      :limpa = "limparTela"
+      :adiciona = "addLista"
+      
+    />
+      <!-- <form @submit.prevent class="operators p-5 mb-4 mt-4 d-flex justify-content-center">
+        <button type="button" class="fs-1 ms-3 me-3 p-3 rounded-5" @click="limparTela()">C</button>
+        <button type="button" class="fs-1 ms-3 me-3 p-3 rounded-5" @click="addLista()">></button>
+      </form> -->
   </div>
+  
+  <div class="list pt-5 ps-4 col-md-4">
+
+    <Listcomp
+      :lis = estado.listas
+    />
+    <!-- <div class="list-items">
+      <p>log:</p>
+      <ul>
+        <li v-for="lista in estado.listas">{{ lista }}</li>
+      </ul>
+    </div> -->
+  </div>
+
+  <footer class="pt-5 text-center">
+    <p>check this project repository on:</p>
+    <a href="https://github.com/danielcscruz/math-app"><img src="./img/github.png" alt=""></a>
+  </footer>
+
 </div>
 
 </template>
@@ -92,64 +124,27 @@ const limparTela = () =>{
   padding: 0;
   box-sizing: border-box;
 }
-
-select{
-  width: 45px;
-  text-align: center;
-  background-color: transparent;
-  color: white;
-  font-size: 20px;
+img{
+  height: 30px;
 }
-select:hover{
+a{
   cursor: pointer;
-  background-color: #ffaa50;
-}
-
-select:active{
-  background-color: transparent;
-}
-select::selection{
-  background-color: transparent;
-}
-
-button{
-  background-color: #FE941F;
-  color: #292929;
-  cursor: pointer;
-}
-
-button:hover{
-  background-color: #ffaa50;
-}
-
-
-input{
-  text-align: center;
-}
-
-.container{
-  background-color: #22252D;
-}
-
-.dis{
-  background-color:#505050 ;
-  
+  text-decoration: none;
 }
 .operator{
   color: silver;
 }
 
-h5{
-  text-align: end;
-  font-weight: 100;
-}
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+.row{
+  display: flex;
+  background-color: #22252D;
+  color: silver;
+  width:100%;
+  height: 100vh;
 }
 
-input[type="number"] {
-  -moz-appearance: textfield;
+footer{
+  background-color: #16181c;
+
 }
 </style>
